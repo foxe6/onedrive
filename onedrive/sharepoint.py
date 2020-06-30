@@ -118,14 +118,13 @@ class SharePoint(object):
                 current_file = location+[folder_items[i][0]]
                 print(" > ".join(current_file))
                 current_file = "\\".join(current_file)
-                if os.path.isfile(self.save_dir+current_folder+"\\"+current_file):
+                if os.path.isfile(self.save_dir+"\\"+current_file):
                     continue
                 folder_items[i][2].click()
                 folder_items[i][3].click()
                 self.xpath(d, self.dlbtn).click()
                 folder_items[i][2].click()
                 time.sleep(self.static)
-                input()
                 crdownload = [0]
                 while len(crdownload) >= 1:
                     crdownload = [self.save_dir+f for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
