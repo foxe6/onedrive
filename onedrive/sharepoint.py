@@ -2,10 +2,13 @@ import os
 import time
 import shutil
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+
+__ALL__ = ["SharePoint"]
 
 
 class SharePoint(object):
@@ -83,12 +86,14 @@ class SharePoint(object):
                 break
             except:
                 time.sleep(60*5)
+                d.refresh()
         while True:
             try:
                 current_root_folder = self.get_current_folder(d)
                 break
             except:
                 time.sleep(60*5)
+                d.refresh()
         if not current_root_folder:
             d.quit()
             raise Exception("empty current_root_folder")
@@ -98,6 +103,7 @@ class SharePoint(object):
                 break
             except:
                 time.sleep(60*5)
+                d.refresh()
         location.append(current_root_folder)
         for i in range(0, len(folder_items)):
             while True:
@@ -106,6 +112,7 @@ class SharePoint(object):
                     break
                 except:
                     time.sleep(60*5)
+                    d.refresh()
             current_folder = "\\".join(location)
             if not folder_items[i][4]:
                 current_file = location+[folder_items[i][0]]
