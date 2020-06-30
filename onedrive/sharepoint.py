@@ -37,7 +37,7 @@ class SharePoint(object):
         self.static = 5
         self.timeout = 5
         self.save_dir = save_dir
-        for onedrive_link in onedrive_links[3-1:]:
+        for onedrive_link in onedrive_links:
             print(onedrive_link, flush=True)
             driver.get(onedrive_link)
             self.loop_folder(driver, root=True)
