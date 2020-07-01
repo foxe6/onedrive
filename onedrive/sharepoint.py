@@ -139,6 +139,7 @@ class SharePoint(object):
                 time.sleep(self.static)
                 if not self.loop_folder(d, location.copy()):
                     if not self.throttle_fallback:
+                        d.quit()
                         raise Exception("onedrive throttle")
                     folder_items = self.get_folder_items(d)
                     print(current_location)
