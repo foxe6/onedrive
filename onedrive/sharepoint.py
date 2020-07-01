@@ -116,8 +116,11 @@ class SharePoint(object):
                 folder_items = self.get_folder_items(d)
                 break
             except:
-                self.sleep(60*5)
-                d.refresh()
+                return False
+                # self.sleep(60*5)
+                # d.refresh()
+                # time.sleep(self.static)
+                # self.scroll_to_bottom_4(d)
         location.append(current_root_folder)
         for i in range(0, len(folder_items)):
             while True:
@@ -125,34 +128,41 @@ class SharePoint(object):
                     folder_items = self.get_folder_items(d)
                     break
                 except:
-                    self.sleep(60*5)
-                    d.refresh()
-                    time.sleep(self.static)
-                    self.scroll_to_bottom_4(d)
+                    return False
+                    # self.sleep(60*5)
+                    # d.refresh()
+                    # time.sleep(self.static)
+                    # self.scroll_to_bottom_4(d)
             current_folder = "\\".join(location)
+            current_location = " > ".join(location+[folder_items[i][0]])
             if not folder_items[i][4]:
-                current_file = location+[folder_items[i][0]]
-                print(" > ".join(current_file))
-                current_file = "\\".join(current_file)
-                if os.path.isfile(self.save_dir+"\\"+current_file):
+                print(current_location)
+                if os.path.isfile(self.save_dir+current_folder+"\\"+folder_items[i][0]):
                     continue
-                folder_items[i][2].click()
-                folder_items[i][3].click()
-                self.xpath(d, self.dlbtn).click()
-                folder_items[i][2].click()
-                time.sleep(self.static)
-                crdownload = [0]
-                while len(crdownload) >= 1:
-                    crdownload = [self.save_dir+f for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
-                self.mkdir(self.save_dir+current_folder+"\\")
-                for fn in os.listdir(self.save_dir):
-                    if os.path.isfile(self.save_dir+fn):
-                        shutil.move(self.save_dir+fn, self.save_dir+current_folder+"\\"+fn)
+                self._download(d, folder_items[i], current_folder)
             else:
                 folder_items[i][1].click()
                 time.sleep(self.static)
-                self.loop_folder(d, location.copy())
+                if not self.loop_folder(d, location.copy()):
+                    folder_items = self.get_folder_items(d)
+                    print(current_location)
+                    self._download(d, folder_items[i], current_folder)
         if not root:
             self.xpaths(d, self.dotdot)[-1].click()
+        return True
+    
+    def _download(self, d, folder_items_i, current_folder):
+        folder_items_i[2].click()
+        folder_items_i[3].click()
+        self.xpath(d, self.dlbtn).click()
+        folder_items_i[2].click()
+        time.sleep(self.static)
+        crdownload = [0]
+        while len(crdownload) >= 1:
+            crdownload = [self.save_dir+f for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
+        self.mkdir(self.save_dir+current_folder+"\\")
+        for fn in os.listdir(self.save_dir):
+            if os.path.isfile(self.save_dir+fn):
+                shutil.move(self.save_dir+fn, self.save_dir+current_folder+"\\"+fn)
 
 
