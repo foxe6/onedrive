@@ -33,6 +33,9 @@ class SharePoint(object):
             }
             chrome_options.add_experimental_option("prefs", chrome_prefs)
             driver = webdriver.Chrome(executable_path=chromedriver_location, options=chrome_options)
+            driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+            })
         driver.maximize_window()
         self.static = 5
         self.timeout = 5
