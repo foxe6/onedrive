@@ -116,7 +116,7 @@ class SharePoint(object):
                 folder_items = self.get_folder_items(d)
                 break
             except:
-                return False
+                return self.return_parent(d, root, False)
                 # self.sleep(60*5)
                 # d.refresh()
                 # time.sleep(self.static)
@@ -128,7 +128,7 @@ class SharePoint(object):
                     folder_items = self.get_folder_items(d)
                     break
                 except:
-                    return False
+                    return self.return_parent(d, root, False)
                     # self.sleep(60*5)
                     # d.refresh()
                     # time.sleep(self.static)
@@ -147,9 +147,15 @@ class SharePoint(object):
                     folder_items = self.get_folder_items(d)
                     print(current_location)
                     self._download(d, folder_items[i], current_folder)
-        if not root:
+        # if not root:
+        #     self.xpaths(d, self.dotdot)[-1].click()
+        # return True
+        return self.return_parent(d, root, True)
+
+    def return_parent(self, d, r, b):
+        if not r:
             self.xpaths(d, self.dotdot)[-1].click()
-        return True
+        return b
     
     def _download(self, d, folder_items_i, current_folder):
         folder_items_i[2].click()
@@ -159,7 +165,7 @@ class SharePoint(object):
         time.sleep(self.static)
         crdownload = [0]
         while len(crdownload) >= 1:
-            crdownload = [self.save_dir+f for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
+            crdownload = [0 for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
         self.mkdir(self.save_dir+current_folder+"\\")
         for fn in os.listdir(self.save_dir):
             if os.path.isfile(self.save_dir+fn):

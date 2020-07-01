@@ -18,7 +18,7 @@ open("README.md", "wb").write(readme.encode("utf-8"))
 description = re.search(r"<i>(.*?)</i>", readme)[1]
 setup(
     name="onedrive",
-    version="0.0.8",
+    version="0.0.9",
     keywords=["onedrive sharepoint downloader bulk"],
     packages=find_packages(),
     url="https://github.com/foxe6/onedrive",
