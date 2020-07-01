@@ -23,7 +23,8 @@ class SharePoint(object):
 
     def __init__(self, onedrive_links: list,
                  save_dir: str,
-                 chromedriver_location: str = None):
+                 chromedriver_location: str = None,
+                 throttle_fallback: bool = False):
         if chromedriver_location is not None:
             chrome_options = ChromeOptions()
             chrome_prefs = {
@@ -42,6 +43,7 @@ class SharePoint(object):
         self.static = 5
         self.timeout = 5
         self.save_dir = save_dir
+        self.throttle_fallback = throttle_fallback
         for onedrive_link in onedrive_links:
             print(onedrive_link, flush=True)
             driver.get(onedrive_link)
@@ -117,10 +119,6 @@ class SharePoint(object):
                 break
             except:
                 return self.return_parent(d, root, False)
-                # self.sleep(60*5)
-                # d.refresh()
-                # time.sleep(self.static)
-                # self.scroll_to_bottom_4(d)
         location.append(current_root_folder)
         for i in range(0, len(folder_items)):
             while True:
@@ -129,10 +127,6 @@ class SharePoint(object):
                     break
                 except:
                     return self.return_parent(d, root, False)
-                    # self.sleep(60*5)
-                    # d.refresh()
-                    # time.sleep(self.static)
-                    # self.scroll_to_bottom_4(d)
             current_folder = "\\".join(location)
             current_location = " > ".join(location+[folder_items[i][0]])
             if not folder_items[i][4]:
@@ -144,12 +138,11 @@ class SharePoint(object):
                 folder_items[i][1].click()
                 time.sleep(self.static)
                 if not self.loop_folder(d, location.copy()):
+                    if not self.throttle_fallback:
+                        raise Exception("onedrive throttle")
                     folder_items = self.get_folder_items(d)
                     print(current_location)
                     self._download(d, folder_items[i], current_folder)
-        # if not root:
-        #     self.xpaths(d, self.dotdot)[-1].click()
-        # return True
         return self.return_parent(d, root, True)
 
     def return_parent(self, d, r, b):
@@ -167,8 +160,12 @@ class SharePoint(object):
         while len(crdownload) >= 1:
             crdownload = [0 for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
         self.mkdir(self.save_dir+current_folder+"\\")
-        for fn in os.listdir(self.save_dir):
-            if os.path.isfile(self.save_dir+fn):
-                shutil.move(self.save_dir+fn, self.save_dir+current_folder+"\\"+fn)
+        old_fn = os.listdir(self.save_dir)[0]
+        if os.path.isfile(self.save_dir+old_fn):
+            if old_fn.startswith("OneDrive_") and old_fn.endswith(".zip"):
+                new_fn = folder_items_i[0]
+            else:
+                new_fn = old_fn
+            shutil.move(self.save_dir+old_fn, self.save_dir+current_folder+"\\"+new_fn)
 
 
