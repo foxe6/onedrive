@@ -32,6 +32,8 @@ class SharePoint(object):
                 "profile.default_content_setting_values.automatic_downloads": 1
             }
             chrome_options.add_experimental_option("prefs", chrome_prefs)
+            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+            chrome_options.add_experimental_option('useAutomationExtension', False)
             driver = webdriver.Chrome(executable_path=chromedriver_location, options=chrome_options)
             driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
                 "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
