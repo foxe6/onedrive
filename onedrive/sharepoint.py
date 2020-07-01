@@ -160,12 +160,11 @@ class SharePoint(object):
         while len(crdownload) >= 1:
             crdownload = [0 for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
         self.mkdir(self.save_dir+current_folder+"\\")
-        old_fn = os.listdir(self.save_dir)[0]
-        if os.path.isfile(self.save_dir+old_fn):
-            if old_fn.startswith("OneDrive_") and old_fn.endswith(".zip"):
-                new_fn = folder_items_i[0]+".zip"
-            else:
-                new_fn = old_fn
-            shutil.move(self.save_dir+old_fn, self.save_dir+current_folder+"\\"+new_fn)
+        old_fn = [fn for fn in os.listdir(self.save_dir) if os.path.isfile(self.save_dir+fn)][0]
+        if old_fn.startswith("OneDrive_") and old_fn.endswith(".zip"):
+            new_fn = folder_items_i[0]+".zip"
+        else:
+            new_fn = old_fn
+        shutil.move(self.save_dir+old_fn, self.save_dir+current_folder+"\\"+new_fn)
 
 
