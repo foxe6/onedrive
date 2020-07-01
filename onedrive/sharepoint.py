@@ -1,11 +1,13 @@
 import os
 import time
 import shutil
+import traceback
 from selenium import webdriver
 from selenium.webdriver import *
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from omnitools import p
 
 
 __ALL__ = ["SharePoint"]
@@ -25,30 +27,37 @@ class SharePoint(object):
                  save_dir: str,
                  chromedriver_location: str = None,
                  throttle_fallback: bool = False):
-        if chromedriver_location is not None:
-            chrome_options = ChromeOptions()
-            chrome_prefs = {
-                "download.default_directory": save_dir,
-                "download.prompt_for_download": False,
-                "profile.default_content_setting_values.automatic_downloads": 1
-            }
-            chrome_options.add_experimental_option("prefs", chrome_prefs)
-            chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
-            chrome_options.add_experimental_option('useAutomationExtension', False)
-            driver = webdriver.Chrome(executable_path=chromedriver_location, options=chrome_options)
-            driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
-                "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-            })
-        driver.maximize_window()
         self.static = 5
         self.timeout = 5
         self.save_dir = save_dir
         self.throttle_fallback = throttle_fallback
-        for onedrive_link in onedrive_links:
-            print(onedrive_link, flush=True)
-            driver.get(onedrive_link)
-            self.loop_folder(driver, root=True)
-        driver.quit()
+        driver = None
+        try:
+            if chromedriver_location is not None:
+                if open(chromedriver_location, "rb").read().find(b"$cdc") > 0:
+                    raise Exception("{} is detected as bots".format(chromedriver_location))
+                chrome_options = ChromeOptions()
+                chrome_prefs = {
+                    "download.default_directory": save_dir,
+                    "download.prompt_for_download": False,
+                    "profile.default_content_setting_values.automatic_downloads": 1
+                }
+                chrome_options.add_experimental_option("prefs", chrome_prefs)
+                chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
+                chrome_options.add_experimental_option('useAutomationExtension', False)
+                driver = webdriver.Chrome(executable_path=chromedriver_location, options=chrome_options)
+                driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+                    "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
+                })
+            driver.maximize_window()
+            for onedrive_link in onedrive_links:
+                p(onedrive_link)
+                driver.get(onedrive_link)
+                self.loop_folder(driver, root=True)
+        except:
+            traceback.print_exc()
+        finally:
+            driver.quit()
 
     def scroll_to_bottom_4(self, d):
         for i in range(0, 4):
@@ -83,54 +92,35 @@ class SharePoint(object):
                  True if "sharedfolder" in _img_types[i].get_attribute("src") else False
                  ) for i, e in enumerate(self.xpaths(d, self.names))]
 
-    def sleep(self, s: int):
-        for i in range(s, -1, -1):
-            time.sleep(1)
-            print("\rthrottled, please wait {}:{}".format(
-                str(i//60).zfill(2),
-                str(i%60).zfill(2)
-            ), end="", flush=True)
-        print(flush=True)
-
     def loop_folder(self, d, location=None, root=False):
         if location is None:
             location = []
         time.sleep(self.static)
-        while True:
-            try:
-                self.scroll_to_bottom_4(d)
-                break
-            except:
-                self.sleep(60*5)
-                d.refresh()
-        while True:
-            try:
-                current_root_folder = self.get_current_folder(d)
-                break
-            except:
-                self.sleep(60*5)
-                d.refresh()
+        try:
+            self.scroll_to_bottom_4(d)
+        except:
+            return self.return_parent(d, root, False)
+        try:
+            current_root_folder = self.get_current_folder(d)
+        except:
+            return self.return_parent(d, root, False)
         if not current_root_folder:
             d.quit()
             raise Exception("empty current_root_folder")
-        while True:
-            try:
-                folder_items = self.get_folder_items(d)
-                break
-            except:
-                return self.return_parent(d, root, False)
+        try:
+            folder_items = self.get_folder_items(d)
+        except:
+            return self.return_parent(d, root, False)
         location.append(current_root_folder)
         for i in range(0, len(folder_items)):
-            while True:
-                try:
-                    folder_items = self.get_folder_items(d)
-                    break
-                except:
-                    return self.return_parent(d, root, False)
+            try:
+                folder_items = self.get_folder_items(d)
+            except:
+                return self.return_parent(d, root, False)
             current_folder = "\\".join(location)
             current_location = " > ".join(location+[folder_items[i][0]])
             if not folder_items[i][4]:
-                print(current_location)
+                p(current_location)
                 if os.path.isfile(self.save_dir+current_folder+"\\"+folder_items[i][0]):
                     continue
                 self._download(d, folder_items[i], current_folder)
@@ -142,7 +132,7 @@ class SharePoint(object):
                         d.quit()
                         raise Exception("onedrive throttle")
                     folder_items = self.get_folder_items(d)
-                    print(current_location)
+                    p(current_location)
                     self._download(d, folder_items[i], current_folder)
         return self.return_parent(d, root, True)
 
@@ -153,13 +143,17 @@ class SharePoint(object):
     
     def _download(self, d, folder_items_i, current_folder):
         folder_items_i[2].click()
+        time.sleep(1)
         folder_items_i[3].click()
+        time.sleep(1)
         self.xpath(d, self.dlbtn).click()
+        time.sleep(1)
         folder_items_i[2].click()
         time.sleep(self.static)
         crdownload = [0]
         while len(crdownload) >= 1:
             crdownload = [0 for f in os.listdir(self.save_dir) if f.endswith(".crdownload")]
+            time.sleep(1)
         self.mkdir(self.save_dir+current_folder+"\\")
         old_fn = [fn for fn in os.listdir(self.save_dir) if os.path.isfile(self.save_dir+fn)][0]
         if old_fn.startswith("OneDrive_") and old_fn.endswith(".zip"):
