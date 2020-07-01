@@ -76,6 +76,15 @@ class SharePoint(object):
                  True if "sharedfolder" in _img_types[i].get_attribute("src") else False
                  ) for i, e in enumerate(self.xpaths(d, self.names))]
 
+    def sleep(self, s: int):
+        for i in range(s, -1, -1):
+            time.sleep(1)
+            print("\rthrottled, please wait {}:{}".format(
+                str(i//60).zfill(2),
+                str(i%60).zfill(2)
+            ), end="", flush=True)
+        print(flush=True)
+
     def loop_folder(self, d, location=None, root=False):
         if location is None:
             location = []
@@ -85,14 +94,14 @@ class SharePoint(object):
                 self.scroll_to_bottom_4(d)
                 break
             except:
-                time.sleep(60*5)
+                self.sleep(60*5)
                 d.refresh()
         while True:
             try:
                 current_root_folder = self.get_current_folder(d)
                 break
             except:
-                time.sleep(60*5)
+                self.sleep(60*5)
                 d.refresh()
         if not current_root_folder:
             d.quit()
@@ -102,7 +111,7 @@ class SharePoint(object):
                 folder_items = self.get_folder_items(d)
                 break
             except:
-                time.sleep(60*5)
+                self.sleep(60*5)
                 d.refresh()
         location.append(current_root_folder)
         for i in range(0, len(folder_items)):
@@ -111,8 +120,10 @@ class SharePoint(object):
                     folder_items = self.get_folder_items(d)
                     break
                 except:
-                    time.sleep(60*5)
+                    self.sleep(60*5)
                     d.refresh()
+                    time.sleep(self.static)
+                    self.scroll_to_bottom_4(d)
             current_folder = "\\".join(location)
             if not folder_items[i][4]:
                 current_file = location+[folder_items[i][0]]
